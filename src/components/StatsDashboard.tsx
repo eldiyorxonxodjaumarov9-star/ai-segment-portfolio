@@ -1,10 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { dashboardStats } from "@/data/content";
+import { useSiteContent } from "@/contexts/SiteContentContext";
 import { AnimatedCounter } from "./AnimatedCounter";
 
 export function StatsDashboard() {
+  const { content } = useSiteContent();
+  const dashboardStats = content.config.stats;
+
   return (
     <section id="stats" className="relative py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

@@ -1,39 +1,23 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { socialLinks } from "@/data/content";
+import { useSiteContent } from "@/contexts/SiteContentContext";
+import { CopyrightYear } from "./CopyrightYear";
 import { IconInstagramOfficial, IconTelegramOfficial, IconYoutubeOfficial } from "./SocialIcons";
 
 const rel = "noopener noreferrer";
 
-const items = [
-  {
-    label: "Telegram — loyiha kanali",
-    sub: "@segment_ai",
-    href: socialLinks.telegram,
-    Icon: IconTelegramOfficial,
-  },
-  {
-    label: "Instagram",
-    sub: "@ai_segment",
-    href: socialLinks.instagram,
-    Icon: IconInstagramOfficial,
-  },
-  {
-    label: "YouTube — Shorts",
-    sub: "@ai_segment",
-    href: socialLinks.youtube,
-    Icon: IconYoutubeOfficial,
-  },
-  {
-    label: "Telegram — hamkorlik",
-    sub: "@segment_admin",
-    href: socialLinks.telegramPartner,
-    Icon: IconTelegramOfficial,
-  },
-] as const;
-
 export function ContactSection() {
+  const { content } = useSiteContent();
+  const social = content.config.social;
+
+  const items = [
+    { label: "Telegram — loyiha kanali", sub: social.telegram.replace(/https?:\/\/(t\.me\/)?/, "@"), href: social.telegram, Icon: IconTelegramOfficial },
+    { label: "Instagram", sub: social.instagram.replace(/https?:\/\/(www\.)?instagram\.com\//, "@"), href: social.instagram, Icon: IconInstagramOfficial },
+    { label: "YouTube — Shorts", sub: "@ai_segment", href: social.youtube, Icon: IconYoutubeOfficial },
+    { label: "Telegram — hamkorlik", sub: social.telegramPartner.replace(/https?:\/\/(t\.me\/)?/, "@"), href: social.telegramPartner, Icon: IconTelegramOfficial },
+  ].filter((i) => i.href);
+
   return (
     <section id="contact" className="relative pb-24 pt-12 sm:pb-32">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -57,7 +41,7 @@ export function ContactSection() {
                   yo‘nalish va timeline qaytaman.
                 </p>
                 <motion.a
-                  href={socialLinks.telegramPartner}
+                  href={social.telegramPartner}
                   target="_blank"
                   rel={rel}
                   whileHover={{ scale: 1.04, y: -2 }}
@@ -104,7 +88,7 @@ export function ContactSection() {
         </motion.div>
 
         <p className="mt-10 text-center text-[11px] text-white/35">
-          © {new Date().getFullYear()} AI SEGMENT — barcha vizual kontseptlar himoyalangan.
+          © <CopyrightYear /> AI SEGMENT — barcha vizual kontseptlar himoyalangan.
         </p>
       </div>
     </section>

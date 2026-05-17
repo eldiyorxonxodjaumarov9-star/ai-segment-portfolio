@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { videoComments } from "@/data/content";
+import { useMemo } from "react";
+import { useSiteContent } from "@/contexts/SiteContentContext";
 import { formatCompact } from "@/lib/format";
 
 function HeartIcon() {
@@ -14,6 +15,23 @@ function HeartIcon() {
 }
 
 export function CommentsSection() {
+  const { content } = useSiteContent();
+
+  const videoComments = useMemo(() => {
+    const visible = content.comments.filter((c) => !c.spam);
+    const byVideo = new Map<string, typeof visible>();
+    for (const c of visible) {
+      const list = byVideo.get(c.videoId) ?? [];
+      list.push(c);
+      byVideo.set(c.videoId, list);
+    }
+    return Array.from(byVideo.entries()).map(([videoId, comments]) => ({
+      videoId,
+      videoTitle: comments[0]?.videoTitle ?? "Video",
+      comments: [...comments].sort((a, b) => Number(b.pinned) - Number(a.pinned)),
+    }));
+  }, [content.comments]);
+
   return (
     <section id="comments" className="relative py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -48,12 +66,13 @@ export function CommentsSection() {
               </div>
               <div className="divide-y divide-white/[0.06]">
                 {block.comments.map((c) => (
-                  <div key={c.id} className="flex gap-3 px-4 py-4 sm:px-5">
+                  <div key={c.id} className={`flex gap-3 px-4 py-4 sm:px-5 ${c.pinned ? "bg-cyan-400/[0.04]" : ""}`}>
                     <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10">
                       <Image
-                        src={`https://picsum.photos/seed/${c.avatarSeed}/96/96`}
+                        src={c.avatarUrl || `https://picsum.photos/seed/${c.avatarSeed}/96/96`}
                         alt={c.user}
                         fill
+                        unoptimized={Boolean(c.avatarUrl)}
                         sizes="40px"
                         className="object-cover"
                       />
@@ -61,6 +80,11 @@ export function CommentsSection() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="text-sm font-semibold text-white">{c.user}</span>
+                        {c.pinned && (
+                          <span className="rounded-full border border-cyan-400/30 px-1.5 text-[9px] uppercase text-cyan-200">
+                            pinned
+                          </span>
+                        )}
                         <span className="text-[11px] text-white/40">{c.time}</span>
                       </div>
                       <p className="mt-1 text-sm leading-relaxed text-white/70">{c.text}</p>
@@ -71,12 +95,6 @@ export function CommentsSection() {
                         >
                           <HeartIcon />
                           <span>{formatCompact(c.likes)}</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="rounded-full px-2 py-1 transition-colors hover:bg-white/[0.06] hover:text-white"
-                        >
-                          Javob
                         </button>
                       </div>
                     </div>

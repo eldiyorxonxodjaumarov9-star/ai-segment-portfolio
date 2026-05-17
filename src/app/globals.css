@@ -2,6 +2,11 @@
 
 :root {
   color-scheme: dark;
+  --neon-primary: #22d3ee;
+  --neon-secondary: #c084fc;
+  --site-bg: #030308;
+  --site-gradient: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(168, 85, 247, 0.22), transparent);
+  --glass-blur: 24px;
 }
 
 html {

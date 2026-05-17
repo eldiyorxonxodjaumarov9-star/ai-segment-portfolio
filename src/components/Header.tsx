@@ -9,7 +9,7 @@ import {
   IconTelegramOfficial,
   IconYoutubeOfficial,
 } from "./SocialIcons";
-import { socialLinks } from "@/data/content";
+import { useSiteContent } from "@/contexts/SiteContentContext";
 
 const nav = [
   { href: "#brands", label: "Brendlar" },
@@ -22,6 +22,9 @@ const nav = [
 ];
 
 export function Header() {
+  const { content } = useSiteContent();
+  const socialLinks = content.config.social;
+
   return (
     <motion.header
       initial={{ y: -16, opacity: 0 }}

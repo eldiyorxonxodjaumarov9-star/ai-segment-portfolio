@@ -1,11 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { brands } from "@/data/content";
-
-const row = [...brands, ...brands, ...brands];
+import { useSiteContent } from "@/contexts/SiteContentContext";
+import Image from "next/image";
 
 export function BrandsSection() {
+  const { content } = useSiteContent();
+  const brands = [...content.brands].sort((a, b) => a.order - b.order);
+  const row = [...brands, ...brands, ...brands];
+
   return (
     <section id="brands" className="relative border-y border-white/[0.06] bg-[#04040c]/80 py-16">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(34,211,238,0.04),transparent)]" />
@@ -40,9 +43,13 @@ export function BrandsSection() {
                   className={`absolute inset-0 bg-gradient-to-br ${b.tone} opacity-40 transition-opacity duration-500 group-hover:opacity-80`}
                 />
                 <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-[radial-gradient(circle_at_30%_0%,rgba(34,211,238,0.35),transparent_55%)]" />
-                <span className="relative z-[1] text-sm font-semibold tracking-[0.2em] text-white/90">
-                  {b.name}
-                </span>
+                {b.logoUrl ? (
+                  <Image src={b.logoUrl} alt={b.name} width={80} height={40} className="relative z-[1] object-contain" unoptimized />
+                ) : (
+                  <span className="relative z-[1] text-sm font-semibold tracking-[0.2em] text-white/90">
+                    {b.name}
+                  </span>
+                )}
                 <span className="pointer-events-none absolute bottom-2 left-3 font-mono text-[9px] uppercase tracking-widest text-white/35">
                   partner
                 </span>

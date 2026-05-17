@@ -2,10 +2,13 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { topVideos } from "@/data/content";
+import { useSiteContent } from "@/contexts/SiteContentContext";
 import { formatCompact, formatFull } from "@/lib/format";
 
 export function TopVideos() {
+  const { content } = useSiteContent();
+  const topVideos = [...content.videos].sort((a, b) => a.order - b.order);
+
   return (
     <section id="videos" className="relative py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -31,9 +34,10 @@ export function TopVideos() {
             >
               <div className="relative aspect-video overflow-hidden">
                 <Image
-                  src={`https://picsum.photos/seed/${v.thumbSeed}/960/540`}
+                  src={v.thumbUrl || `https://picsum.photos/seed/${v.thumbSeed}/960/540`}
                   alt={v.title}
                   fill
+                  unoptimized={Boolean(v.thumbUrl?.startsWith("http"))}
                   sizes="(max-width: 768px) 100vw, 33vw"
                   className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                   priority={idx < 2}
@@ -47,10 +51,12 @@ export function TopVideos() {
                 >
                   <div className="absolute inset-0 bg-[repeating-linear-gradient(180deg,rgba(255,255,255,0.06)_0px,rgba(255,255,255,0.06)_1px,transparent_3px,transparent_6px)] animate-[scan_2.8s_linear_infinite]" />
                 </motion.div>
-                <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[11px] font-medium text-white/85 backdrop-blur-md">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500 shadow-[0_0_12px_#ef4444]" />
-                  TOP
-                </div>
+                {(v.pinned || v.featured) && (
+                  <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[11px] font-medium text-white/85 backdrop-blur-md">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500 shadow-[0_0_12px_#ef4444]" />
+                    {v.pinned ? "PINNED" : "TOP"}
+                  </div>
+                )}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-500 group-hover:opacity-100">
                   <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/25 bg-black/40 shadow-[0_0_40px_rgba(34,211,238,0.35)] backdrop-blur-md">
                     <span className="ml-1 inline-block h-0 w-0 border-y-[9px] border-l-[14px] border-y-transparent border-l-white" />

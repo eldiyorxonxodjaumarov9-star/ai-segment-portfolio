@@ -7,6 +7,8 @@ import {
   useMotionValueEvent,
   useSpring,
 } from "framer-motion";
+import { formatNumber } from "@/lib/format";
+import { useMounted } from "@/hooks/useMounted";
 
 type Props = {
   value: number;
@@ -16,23 +18,35 @@ type Props = {
 
 export function AnimatedCounter({ value, suffix = "", prefix = "" }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
+  const mounted = useMounted();
   const inView = useInView(ref, { once: true, margin: "-12%" });
   const mv = useMotionValue(0);
   const spring = useSpring(mv, { stiffness: 48, damping: 22, mass: 0.45 });
-  const [text, setText] = useState("0");
+
+  const staticText = formatNumber(value);
+  const [text, setText] = useState(staticText);
+  const shouldAnimate = mounted && inView;
 
   useEffect(() => {
-    if (inView) mv.set(value);
-  }, [inView, mv, value]);
+    setText(formatNumber(value));
+    if (!shouldAnimate) {
+      mv.set(0);
+      return;
+    }
+    mv.set(value);
+  }, [value, shouldAnimate, mv]);
 
   useMotionValueEvent(spring, "change", (latest) => {
-    setText(Math.round(latest).toLocaleString("uz-UZ"));
+    if (!shouldAnimate) return;
+    setText(formatNumber(Math.round(latest)));
   });
 
+  const display = shouldAnimate ? text : staticText;
+
   return (
-    <span ref={ref} className="tabular-nums tracking-tight">
+    <span ref={ref} className="tabular-nums tracking-tight" suppressHydrationWarning>
       {prefix}
-      {text}
+      {display}
       {suffix}
     </span>
   );

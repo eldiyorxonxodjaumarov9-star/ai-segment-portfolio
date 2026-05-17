@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
+import { SiteContentProvider, useSiteContent } from "@/contexts/SiteContentContext";
+import { useMounted } from "@/hooks/useMounted";
+import { ThemeApplier } from "./ThemeApplier";
 import { LoadingScreen } from "./LoadingScreen";
 import { ScrollProgress } from "./ScrollProgress";
 import { MouseGlow } from "./MouseGlow";
@@ -15,19 +18,29 @@ import { CommentsSection } from "./CommentsSection";
 import { AboutSection } from "./AboutSection";
 import { ContactSection } from "./ContactSection";
 
-export default function HomeClient() {
+function HomeContent() {
+  const { content } = useSiteContent();
+  const mounted = useMounted();
   const [loading, setLoading] = useState(true);
+  const theme = content.config.theme;
 
   useEffect(() => {
+    if (!mounted) return;
     const t = window.setTimeout(() => setLoading(false), 2600);
     return () => window.clearTimeout(t);
-  }, []);
+  }, [mounted]);
+
+  const showLoader = mounted && loading;
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#030308] text-white">
+    <div
+      className="relative min-h-screen overflow-x-hidden text-white"
+      style={{ background: theme.backgroundColor }}
+    >
+      <ThemeApplier />
       <ScrollProgress />
-      <MouseGlow />
-      <AnimatePresence>{loading && <LoadingScreen key="loader" />}</AnimatePresence>
+      {mounted && theme.mouseGlowEnabled && <MouseGlow />}
+      <AnimatePresence>{showLoader && <LoadingScreen key="loader" />}</AnimatePresence>
 
       <Header />
       <main>
@@ -41,5 +54,13 @@ export default function HomeClient() {
         <ContactSection />
       </main>
     </div>
+  );
+}
+
+export default function HomeClient() {
+  return (
+    <SiteContentProvider>
+      <HomeContent />
+    </SiteContentProvider>
   );
 }
