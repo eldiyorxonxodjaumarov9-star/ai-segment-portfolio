@@ -4,8 +4,12 @@ import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 
 const webRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const envPath = path.join(webRoot, ".env.local");
+const envLocalPath = path.join(webRoot, ".env.local");
+const envPath = path.join(webRoot, ".env");
 const examplePath = path.join(webRoot, ".env.local.example");
+
+const isVercel = process.env.VERCEL === "1";
+const isCI = process.env.CI === "true" || process.env.CI === "1";
 
 const REQUIRED = [
   "NEXT_PUBLIC_FIREBASE_API_KEY",
@@ -16,30 +20,24 @@ const REQUIRED = [
   "NEXT_PUBLIC_FIREBASE_APP_ID",
 ];
 
+/** Load a file into process.env without overriding values already set (e.g. Vercel). */
 function loadEnvFile(file) {
-  if (!fs.existsSync(file)) return {};
-  const parsed = dotenv.parse(fs.readFileSync(file));
-  for (const [k, v] of Object.entries(parsed)) {
-    if (v !== undefined && v !== "") process.env[k] = v;
-  }
-  return parsed;
+  if (!fs.existsSync(file)) return false;
+  dotenv.config({ path: file, override: false });
+  return true;
 }
 
-if (!fs.existsSync(envPath)) {
-  if (fs.existsSync(examplePath)) {
-    fs.copyFileSync(examplePath, envPath);
-    console.log("\n✓ Created .env.local from .env.local.example");
-    console.log(`  Path: ${envPath}`);
-    console.log("  → Open this file and paste your Firebase keys from Firebase Console.\n");
-  } else {
-    console.error("\n✗ Missing .env.local");
-    console.error(`  Create: ${envPath}\n`);
-    process.exit(1);
-  }
-}
+// Optional local files — never required; Vercel/shell env vars are used as-is.
+const loadedLocal = loadEnvFile(envPath) || loadEnvFile(envLocalPath);
 
-loadEnvFile(envPath);
-loadEnvFile(path.join(webRoot, ".env"));
+// Local-only helper: scaffold .env.local from example when missing.
+if (!isVercel && !isCI && !fs.existsSync(envLocalPath) && fs.existsSync(examplePath)) {
+  fs.copyFileSync(examplePath, envLocalPath);
+  loadEnvFile(envLocalPath);
+  console.log("\n✓ Created .env.local from .env.local.example");
+  console.log(`  Path: ${envLocalPath}`);
+  console.log("  → Open this file and paste your Firebase keys from Firebase Console.\n");
+}
 
 const missing = REQUIRED.filter((key) => {
   const v = (process.env[key] ?? "").trim();
@@ -47,11 +45,27 @@ const missing = REQUIRED.filter((key) => {
 });
 
 if (missing.length > 0) {
-  console.warn("\n⚠ Firebase keys incomplete in .env.local:");
+  console.warn("\n⚠ Firebase environment variables incomplete:");
   missing.forEach((k) => console.warn(`   - ${k}`));
-  console.warn(`\n  Edit: ${envPath}`);
+
+  if (isVercel) {
+    console.warn("\n  Vercel → Project → Settings → Environment Variables");
+    console.warn("  Add all NEXT_PUBLIC_FIREBASE_* keys for Production, Preview, and Development.\n");
+    process.exit(1);
+  }
+
+  if (isCI) {
+    console.warn("\n  Set these variables in your CI environment.\n");
+    process.exit(1);
+  }
+
+  console.warn(`\n  Local: add keys to ${envLocalPath} (or export them in your shell).`);
   console.warn("  Firebase Console → Project settings → Your apps → Web app → config\n");
-  console.warn("  Dev server will start, but admin login will not work until keys are set.\n");
+  console.warn("  Dev/build will continue, but admin login will not work until keys are set.\n");
 } else {
-  console.log("✓ Firebase environment variables loaded from .env.local\n");
+  let source = "environment";
+  if (isVercel) source = "Vercel environment variables";
+  else if (fs.existsSync(envLocalPath)) source = ".env.local";
+  else if (loadedLocal) source = ".env";
+  console.log(`✓ Firebase environment variables loaded from ${source}\n`);
 }
